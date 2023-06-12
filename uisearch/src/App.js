@@ -24,7 +24,7 @@ function Search() {
     }
 
     if (modelSelect === 'vec'){
-      fetch(`http://localhost:8000/vec?q=${query}`)
+      fetch(`http://localhost:8000/vec?q=${query}&k=${number}`)
       .then(response => response.json())
       .then(data => {
         console.log(data.result)
