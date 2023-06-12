@@ -105,25 +105,16 @@ class VectorSpace():
     def __init__(self):
         pass
     
-    
-    def tokenize_process(data):
+    def tokenize_process(self, data):
         lines = data.lower()
-
         lines = re.sub(r"[^a-zA-Z0-9]", " ", lines)
-
         tokens = lines.split()
-
         clean_tokens = [word for word in tokens if word not in stop_words]
-
         stem_tokens = [stemmer.stem(word) for word in clean_tokens]
-
      
         clean_stem_tokens = [word for word in stem_tokens if word not in stop_words]
 
-       
         clean_stem_tokens = ' '.join(map(str,  clean_stem_tokens))
-
-    
         clean_stem_tokens = shortword.sub('', clean_stem_tokens)
         return clean_stem_tokens
 
@@ -136,8 +127,6 @@ class VectorSpace():
     
     vocab = load_vocab('./vocab_vector.txt')
     
-    
-    
     def load_df(path_df):
         with open(path_df, 'r') as f:
             DF= json.load(f)
@@ -145,7 +134,8 @@ class VectorSpace():
         return DF
     
     DF = load_df('./DF.json')
-    print('this is DF', type(DF))
+    
+    
     
     
     def loadweight_vector(path_weight):
@@ -159,7 +149,6 @@ class VectorSpace():
         Q = np.zeros((len(vocab)))
         counter = Counter(tokens)
         words_count = len(tokens)
-        # query_weights = {}
         
 
         for token in np.unique(tokens):
@@ -184,8 +173,11 @@ class VectorSpace():
         tokens = query.split()
         d_cosines = []
         query_vector = self.gen_vector(tokens)
+        # print('vector query: ', query_vector)
         for d in D:
+            # print('in for 1: ', d)
             d_cosines.append(self.cosine_sim(query_vector, d))
+            # print('d cosines: ', d_cosines)
         if k == 0:
             out = np.array(d_cosines).argsort()[::-1]
         else:
@@ -194,28 +186,19 @@ class VectorSpace():
         return out
     
     def search(self, query, k = 0):
-        print(query)
-        lines = query.lower()
-
-        lines = re.sub(r"[^a-zA-Z0-9]", " ", lines)
-
-        tokens = lines.split()
-
-        clean_tokens = [word for word in tokens if word not in stop_words]
-
-        stem_tokens = [stemmer.stem(word) for word in clean_tokens]
-
-     
-        clean_stem_tokens = [word for word in stem_tokens if word not in stop_words]
-
-       
-        clean_stem_tokens = ' '.join(map(str,  clean_stem_tokens))
-
-    
-        clean_stem_tokens = shortword.sub('', clean_stem_tokens)
-        # query = self.tokenize_process(query)
-        result = self.cosine_similarity(k, clean_stem_tokens)
-        return result
+        query = self.tokenize_process(query)
+        cs = self.cosine_similarity(k, query)
+        cs = cs.tolist()
+        cs = [str(x+1) for x in cs]
+        document = []
+        for i in cs:
+            with open('./Cranfield/' + i + '.txt', 'r') as f:
+                content = f.readlines()
+            content = [x.strip() for x in content]
+            content.append(f' \t -------> file {i}.txt')
+            
+            document.append(content)
+        return document
 
 
 BM25 = BM25()
@@ -225,7 +208,7 @@ VectorSpace = VectorSpace()
 async def searchvec(q: str = Query(None, min_length=1), k : int = Query(0)):
    
     result = VectorSpace.search(q, k)
-    
+    # print(type(result))
     return {"result": result}
 
 @app.get("/bm25")
@@ -234,6 +217,7 @@ async def search(q: str = Query(None, min_length=1), k: int = Query(0)):
     querry = BM25.preprocessing_stem(q)
     res_docidx, res_score , document= BM25.eval(querry,top_n = k)
     res = document
+    print(type(res))
     return {"result": res}
 
 if __name__ == "__main__":
