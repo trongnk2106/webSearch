@@ -23,8 +23,11 @@ function Search() {
       .catch(error => console.log(error));
     }
 
+   
+    event.preventDefault();
     if (modelSelect === 'vec'){
-      fetch(`http://localhost:8000/vec?q=${query}`)
+      console.log('in vector: ',number)
+      fetch(`http://localhost:8000/vec?q=${query}&k=${number}`)
       .then(response => response.json())
       .then(data => {
         console.log(data.result)

@@ -37,9 +37,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-
-
 class BM25():
     
     def __init__(self):
@@ -125,7 +122,7 @@ class VectorSpace():
         content = [x.strip() for x in content]
         return content
     
-    vocab = load_vocab('./vocab_vector.txt')
+    vocab = load_vocab('./vocab.txt')
     
     def load_df(path_df):
         with open(path_df, 'r') as f:
@@ -135,9 +132,7 @@ class VectorSpace():
     
     DF = load_df('./DF.json')
     
-    
-    
-    
+   
     def loadweight_vector(path_weight):
         return np.load(path_weight)
     
@@ -185,9 +180,10 @@ class VectorSpace():
 
         return out
     
-    def search(self, query, k = 0):
+    def search(self, query, top_k = 0):
+        # print('in search function',top_k)
         query = self.tokenize_process(query)
-        cs = self.cosine_similarity(k, query)
+        cs = self.cosine_similarity(top_k, query)
         cs = cs.tolist()
         cs = [str(x+1) for x in cs]
         document = []
@@ -205,15 +201,15 @@ BM25 = BM25()
 VectorSpace = VectorSpace()
 
 @app.get("/vec")
-async def searchvec(q: str = Query(None, min_length=1), k : int = Query(0)):
-   
-    result = VectorSpace.search(q, k)
+async def searchvec(q: str = Query(None, min_length=1), k: int = Query(0)):
+    # print('in url function',k)
+    result = VectorSpace.search(query = q, top_k=  k)
     # print(type(result))
     return {"result": result}
 
 @app.get("/bm25")
 async def search(q: str = Query(None, min_length=1), k: int = Query(0)):
-    
+    # print('in bm25: ', k)
     querry = BM25.preprocessing_stem(q)
     res_docidx, res_score , document= BM25.eval(querry,top_n = k)
     res = document
